@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SummaryGenius | AI Text Summarizer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #7C3AED;
+            --primary-light: #8B5CF6;
+            --secondary: #EC4899;
+            --text-primary: #F9FAFB;
+            --text-secondary: #9CA3AF;
+            --bg-primary: #111827;
+            --bg-secondary: #1F2937;
+            --card-bg: rgba(31, 41, 55, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+        }
+
+        .light-theme {
+            --primary: #6D28D9;
+            --primary-light: #7C3AED;
+            --secondary: #DB2777;
+            --text-primary: #111827;
+            --text-secondary: #4B5563;
+            --bg-primary: #F3F4F6;
+            --bg-secondary: #E5E7EB;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(31, 41, 55, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            transition: all 0.25s ease;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .animated-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .gradient {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(125deg, #7928CA, #FF0080, #4158D0);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            opacity: 0.5;
+        }
+
+        .light-theme .gradient {
+            background: linear-gradient(125deg, #8B5CF6, #EC4899, #3B82F6);
+            opacity: 0.2;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+        }
+
+        .shape-1 {
+            width: 500px;
+            height: 500px;
+            background: var(--primary);
+            top: -200px;
+            right: -100px;
+            opacity: 0.2;
+            animation: float 25s ease-in-out infinite;
+        }
+
+        .shape-2 {
+            width: 400px;
+            height: 400px;
+            background: var(--secondary);
+            bottom: -150px;
+            left: -100px;
+            opacity: 0.2;
+            animation: float 18s ease-in-out infinite 2s;
+        }
+
+        .shape-3 {
+            width: 300px;
+            height: 300px;
+            background: var(--success);
+            top: 50%;
+            left: 60%;
+            opacity: 0.15;
+            animation: float 20s ease-in-out infinite 1s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(50px, 50px) rotate(90deg); }
+            50% { transform: translate(0, 100px) rotate(180deg); }
+            75% { transform: translate(-50px, 50px) rotate(270deg); }
+            100% { transform: translate(0, 0) rotate(360deg); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .logo-icon {
+            color: var(--primary);
+            font-size: 1.75rem;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-description {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .input-container {
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            resize: vertical;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .light-theme textarea {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+        }
+
+        .character-count {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            color: var(--text-primary);
+        }
+
+        .options {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .option-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .option-btn:hover {
+            background: rgba(124, 58, 237, 0.1);
+            color: var(--primary);
+        }
+
+        .option-btn.active {
+            background: rgba(124, 58, 237, 0.1);
+            color: var(--primary);
+        }
+
+        .loading {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            margin: 2rem 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(124, 58, 237, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.875rem;
+            position: relative;
+        }
+
+        .tab.active {
+            color: var(--primary);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .summary-text {
+            line-height: 1.6;
+            font-size: 0.9375rem;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .light-theme .stat-card {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .feedback {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .feedback-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .feedback-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .feedback-btn.like:hover {
+            color: var(--success);
+        }
+
+        .feedback-btn.dislike:hover {
+            color: var(--error);
+        }
+
+        .tools {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .tool-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .tool-btn:hover {
+            background: rgba(124, 58, 237, 0.1);
+            color: var(--primary);
+        }
+
+        .copy-notification {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--success);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .copy-notification.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .glass-card {
+                padding: 1.5rem;
+            }
+
+            .actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .options {
+                margin-top: 1rem;
+                justify-content: center;
+            }
+        }
+
+        /* Microinteractions */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .btn-primary:active {
+            transform: scale(0.95);
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.7);
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        }
+
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* Parallax effect */
+        .parallax-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .parallax-element {
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <div class="animated-background">
+        <div class="gradient"></div>
+        <div class="shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+    </div>
+
+    <div class="container parallax-container">
+        <header>
+            <div class="logo parallax-element" data-depth="0.2">
+                <i class="fas fa-brain logo-icon"></i>
+                <span>SummaryGenius</span>
+            </div>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </header>
+
+        <div class="glass-card parallax-element" data-depth="0.1">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-file-alt"></i> Input Text</h2>
+                <p class="card-description">Paste your content below and our AI will generate a concise summary.</p>
+            </div>
+            <div class="input-container">
+                <textarea id="inputText" placeholder="Paste your article, document, or long text here..."></textarea>
+                <div class="character-count">0 characters</div>
+            </div>
+            <div class="actions">
+                <div class="options">
+                    <button class="option-btn active">
+                        <i class="fas fa-bolt"></i> Concise
+                    </button>
+                    <button class="option-btn">
+                        <i class="fas fa-book"></i> Detailed
+                    </button>
+                    <button class="option-btn">
+                        <i class="fas fa-list"></i> Bullet Points
+                    </button>
+                </div>
+                <button class="btn btn-primary" id="summarizeBtn">
+                    <i class="fas fa-magic"></i> Summarize
+                </button>
+            </div>
+        </div>
+
+        <div class="loading">
+            <div class="spinner"></div>
+        </div>
+
+        <div class="results glass-card parallax-element" data-depth="0.05">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-check-circle"></i> Summary Results</h2>
+                <p class="card-description">Here's your AI-generated summary powered by Claude.</p>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="summary">Summary</div>
+                <div class="tab" data-tab="stats">Stats & Analysis</div>
+            </div>
+            
+            <div class="tab-content active" data-tab="summary">
+                <div class="summary-text">
+                    Your AI-generated summary will appear here. The summary will be concise while capturing the essential information from your text.
+                </div>
+                
+                <div class="tools">
+                    <button class="tool-btn" id="copyBtn">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button class="tool-btn">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                    <button class="tool-btn">
+                        <i class="fas fa-share-alt"></i> Share
+                    </button>
+                </div>
+                
+                <div class="feedback">
+                    <button class="feedback-btn like">
+                        <i class="far fa-thumbs-up"></i>
+                    </button>
+                    <button class="feedback-btn dislike">
+                        <i class="far fa-thumbs-down"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="tab-content" data-tab="stats">
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-value">85%</div>
+                        <div class="stat-label">Reduction Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">95%</div>
+                        <div class="stat-label">Key Info Retention</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">Main Topics</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">7</div>
+                        <div class="stat-label">Reading Time (min)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="copy-notification">
+        <i class="fas fa-check"></i> Copied to clipboard!
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('light-theme');
+            
+            if (body.classList.contains('light-theme')) {
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+            
+            // Add ripple effect
+            createRipple(themeToggle);
+        });
+        
+        // Character Count
+        const inputText = document.getElementById('inputText');
+        const characterCount = document.querySelector('.character-count');
+        
+        inputText.addEventListener('input', () => {
+            const count = inputText.value.length;
+            characterCount.textContent = `${count} characters`;
+        });
+        
+        // Tab Switching
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.getAttribute('data-tab');
+                
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                document.querySelector(`.tab-content[data-tab="${tabName}"]`).classList.add('active');
+                
+                // Add ripple effect
+                createRipple(tab);
+            });
+        });
+        
+        // Option Selection
+        const optionBtns = document.querySelectorAll('.option-btn');
+        let selectedSummaryType = "concise"; // Default option
+        
+        optionBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                optionBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Set the selected summary type based on button text
+                const buttonText = btn.textContent.trim().toLowerCase();
+                if (buttonText.includes("concise")) {
+                    selectedSummaryType = "concise";
+                } else if (buttonText.includes("detailed")) {
+                    selectedSummaryType = "detailed";
+                } else if (buttonText.includes("bullet")) {
+                    selectedSummaryType = "bullet_points";
+                }
+                
+                // Add ripple effect
+                createRipple(btn);
+            });
+        });
+        
+        // Ripple Effect
+        function createRipple(button) {
+            const ripple = document.createElement('span');
+            ripple.classList.add('ripple');
+            button.appendChild(ripple);
+            
+            const rect = button.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            
+            ripple.style.width = ripple.style.height = `${size}px`;
+            ripple.style.left = `${event.clientX - rect.left - size / 2}px`;
+            ripple.style.top = `${event.clientY - rect.top - size / 2}px`;
+            
+            ripple.addEventListener('animationend', () => {
+                ripple.remove();
+            });
+        }
+        
+        // Add ripple effect to all buttons
+        const buttons = document.querySelectorAll('.btn, .option-btn, .tool-btn, .feedback-btn');
+        buttons.forEach(button => {
+            button.addEventListener('click', function(event) {
+                createRipple(this);
+            });
+        });
+        
+        // Copy functionality
+        const copyBtn = document.getElementById('copyBtn');
+        const summaryText = document.querySelector('.summary-text');
+        const copyNotification = document.querySelector('.copy-notification');
+        
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(summaryText.textContent.trim())
+                .then(() => {
+                    copyNotification.classList.add('show');
+                    setTimeout(() => {
+                        copyNotification.classList.remove('show');
+                    }, 2000);
+                });
+        });
+        
+        // Claude API Integration
+        // We'll use a proxy server to protect the API key
+        async function getSummaryFromClaude(text, summaryType) {
+            try {
+                // This calls your backend proxy endpoint, not Claude API directly
+                const response = await fetch('/api/summarize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        text: text,
+                        summaryType: summaryType
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+                
+                const data = await response.json();
+                return data.summary;
+            } catch (error) {
+                console.error('Error calling API:', error);
+                return 'An error occurred while generating the summary. Please try again.';
+            }
+        }
+        
+        // Update Stats
+        function updateStats(originalText, summaryText) {
+            const reductionRate = Math.round((1 - (summaryText.length / originalText.length)) * 100);
+            const readingTime = Math.ceil(summaryText.split(' ').length / 200); // Avg reading speed: 200 words/min
+            
+            // For demo purposes, we're setting static values for some metrics
+            // In a real app, you might calculate these with more sophisticated algorithms
+            document.querySelector('.stats .stat-value:nth-child(1)').textContent = `${reductionRate}%`;
+            document.querySelector('.stats .stat-value:nth-child(3)').textContent = '3'; // Main topics - would need topic modeling
+            document.querySelector('.stats .stat-value:nth-child(4)').textContent = readingTime;
+        }
+        
+        // Summarize Button
+        const summarizeBtn = document.getElementById('summarizeBtn');
+        const loading = document.querySelector('.loading');
+        const results = document.querySelector('.results');
+        
+        summarizeBtn.addEventListener('click', async () => {
+            const text = inputText.value.trim();
+            
+            if (text === '') {
+                // Shake animation for empty input
+                inputText.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    inputText.style.animation = '';
+                }, 500);
+                return;
+            }
+            
+            // Show loading state
+            loading.style.display = 'flex';
+            results.style.display = 'none';
+            
+            try {
+                // Call the Claude API via our proxy server
+                const summary = await getSummaryFromClaude(text, selectedSummaryType);
+                
+                // Update the UI with the result
+                summaryText.textContent = summary;
+                
+                // Update statistics
+                updateStats(text, summary);
+                
+                // Hide loading, show results
+                loading.style.display = 'none';
+                results.style.display = 'block';
+                
+                // Animation for results appearance
+                results.style.animation = 'fadeIn 0.5s';
+            } catch (error) {
+                console.error('Error:', error);
+                // Handle error state
+                loading.style.display = 'none';
+                summaryText.textContent = 'An error occurred while generating the summary. Please try again.';
+                results.style.display = 'block';
+            }
+        });
+        
+        // Parallax effect
+        const parallaxContainer = document.querySelector('.parallax-container');
+        const parallaxElements = document.querySelectorAll('.parallax-element');
+        
+        parallaxContainer.addEventListener('mousemove', (e) => {
+            const containerRect = parallaxContainer.getBoundingClientRect();
+            const centerX = containerRect.left + containerRect.width / 2;
+            const centerY = containerRect.top + containerRect.height / 2;
+            
+            const moveX = (e.clientX - centerX) / 30;
+            const moveY = (e.clientY - centerY) / 30;
+            
+            parallaxElements.forEach(element => {
+                const depth = element.getAttribute('data-depth');
+                element.style.transform = `translate3d(${moveX * depth}px, ${moveY * depth}px, 0)`;
+            });
+        });
+        
+        // Feedback buttons interaction
+        const feedbackBtns = document.querySelectorAll('.feedback-btn');
+        
+        feedbackBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.style.animation = 'pulse 0.5s';
+                
+                // Toggle between filled and outline icons
+                const icon = btn.querySelector('i');
+                if (icon.classList.contains('far')) {
+                    icon.classList.replace('far', 'fas');
+                    
+                    // Apply appropriate color based on button type
+                    if (btn.classList.contains('like')) {
+                        btn.style.color = 'var(--success)';
+                    } else {
+                        btn.style.color = 'var(--error)';
+                    }
+                    
+                    // Reset other button
+                    feedbackBtns.forEach(otherBtn => {
+                        if (otherBtn !== btn) {
+                            otherBtn.querySelector('i').classList.replace('fas', 'far');
+                            otherBtn.style.color = 'var(--text-secondary)';
+                        }
+                    });
+                } else {
+                    icon.classList.replace('fas', 'far');
+                    btn.style.color = 'var(--text-secondary)';
+                }
+                
+                setTimeout(() => {
+                    btn.style.animation = '';
+                }, 500);
+            });
+        });
+
+        // Custom shake animation for error states
+        document.styleSheets[0].insertRule(`
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+        `, document.styleSheets[0].cssRules.length);
+
+        // Custom fade-in animation
+        document.styleSheets[0].insertRule(`
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `, document.styleSheets[0].cssRules.length);
+    </script>
+</body>
+</html>
